@@ -128,6 +128,11 @@ io.on('connection', (socket) => {
   });
 });
 
+// Add root route handler
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // File upload endpoint
 app.post('/upload', upload.single('file'), (req, res) => {
   if (!req.file) {

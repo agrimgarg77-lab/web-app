@@ -6,6 +6,10 @@
       "use": "@vercel/node"
     },
     {
+      "src": "api/socket.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "public/**/*",
       "use": "@vercel/static"
     }
@@ -16,12 +20,16 @@
       "dest": "/api/index.js"
     },
     {
-      "src": "/upload",
-      "dest": "/api/index.js"
+      "src": "/socket.io",
+      "dest": "/api/socket.js"
     },
     {
       "src": "/socket.io/(.*)",
-      "dest": "/api/index.js"
+      "dest": "/api/socket.js"
+    },
+    {
+      "src": "/",
+      "dest": "/public/index.html"
     },
     {
       "src": "/(.*)",
@@ -34,13 +42,25 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self' ws: wss: https://your-app-name.vercel.app; media-src 'self' blob:; font-src 'self' https://cdnjs.cloudflare.com;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self' ws: wss:; media-src 'self' blob:; font-src 'self' https://cdnjs.cloudflare.com;"
+        }
+      ]
+    },
+    {
+      "source": "/socket.io(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
         }
       ]
     }
   ],
   "functions": {
     "api/index.js": {
+      "maxDuration": 30
+    },
+    "api/socket.js": {
       "maxDuration": 30
     }
   }

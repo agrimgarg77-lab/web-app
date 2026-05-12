@@ -160,9 +160,9 @@ app.get('/health', (req, res) => {
 });
 
 // Export for Vercel
-module.exports = (req, res) => {
+export default function handler(req, res) {
   app(req, res);
-};
+}
 
 // For local development
 if (process.env.NODE_ENV !== 'production') {

@@ -118,7 +118,7 @@ class WebCommunicationApp {
         // Special handling for Vercel
         if (window.location.hostname.includes('vercel.app')) {
             socketOptions.forceNew = true;
-            socketOptions.path = '/api/socket.io';
+            socketOptions.path = '/socket.io';
         }
 
         this.socket = io(socketOptions);
@@ -159,7 +159,7 @@ class WebCommunicationApp {
         // Special handling for Vercel
         if (window.location.hostname.includes('vercel.app')) {
             socketOptions.forceNew = true;
-            socketOptions.path = '/api/socket.io';
+            socketOptions.path = '/socket.io';
         }
 
         this.socket = io(socketOptions);

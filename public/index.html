@@ -7,68 +7,320 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #8b5cf6;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --dark-bg: #1f2937;
+            --dark-text: #f3f4f6;
+        }
+
+        * {
+            transition: all 0.3s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        .dark .glass-morphism {
+            background: rgba(31, 41, 55, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
         .chat-container {
             height: calc(100vh - 200px);
         }
+
         .messages-container {
-            height: calc(100% - 60px);
+            height: calc(100% - 80px);
             overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
         }
+
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .message-bubble {
+            animation: slideInUp 0.3s ease-out;
+            transform-origin: bottom;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .video-container {
             position: relative;
             background: #1a1a1a;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
+
         .video-element {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
+
         .screen-share-video {
             max-width: 100%;
             max-height: 400px;
-            border-radius: 8px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
+
         .file-preview {
             max-width: 200px;
             max-height: 150px;
             object-fit: cover;
             border-radius: 8px;
             cursor: pointer;
+            transition: transform 0.2s ease;
         }
+
+        .file-preview:hover {
+            transform: scale(1.05);
+        }
+
         .typing-indicator {
             display: none;
             animation: pulse 1.5s infinite;
         }
+
         @keyframes pulse {
             0%, 100% { opacity: 0.4; }
             50% { opacity: 1; }
         }
+
         .online-indicator {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             background: #10b981;
             border-radius: 50%;
             display: inline-block;
-            margin-right: 4px;
+            margin-right: 6px;
+            animation: onlinePulse 2s infinite;
+        }
+
+        @keyframes onlinePulse {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            50% { 
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), #2563eb);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary-color), #7c3aed);
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        .emoji-picker {
+            position: absolute;
+            bottom: 60px;
+            right: 10px;
+            background: white;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            z-index: 1000;
+        }
+
+        .emoji-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 18px;
+            transition: background 0.2s;
+        }
+
+        .emoji-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .dark {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+
+        .dark .glass-morphism {
+            background: rgba(31, 41, 55, 0.95);
+            color: var(--dark-text);
+        }
+
+        .dark input, .dark textarea {
+            background: rgba(55, 65, 81, 0.8);
+            color: var(--dark-text);
+            border-color: rgba(156, 163, 175, 0.3);
+        }
+
+        .dark .messages-container::-webkit-scrollbar-thumb {
+            background-color: #4b5563;
+        }
+
+        .voice-recorder {
+            position: relative;
+            display: inline-block;
+        }
+
+        .voice-wave {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(239, 68, 68, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--danger-color);
+            white-space: nowrap;
+        }
+
+        .voice-recording {
+            animation: recordPulse 1.5s infinite;
+        }
+
+        @keyframes recordPulse {
+            0%, 100% { 
+                background: var(--danger-color);
+                transform: scale(1);
+            }
+            50% { 
+                background: #dc2626;
+                transform: scale(1.1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                height: calc(100vh - 150px);
+            }
+            
+            .glass-morphism {
+                margin: 8px;
+            }
         }
     </style>
 </head>
 <body class="bg-gray-100">
     <!-- Header -->
-    <header class="bg-blue-600 text-white p-4 shadow-lg">
+    <header class="glass-morphism text-gray-800 p-4 shadow-lg sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold">
-                <i class="fas fa-comments mr-2"></i>Web Communication App
-            </h1>
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-comments text-white text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Web Communication App
+                </h1>
+            </div>
             <div class="flex items-center space-x-4">
-                <span id="userCount" class="text-sm">
-                    <i class="fas fa-users mr-1"></i>
-                    <span id="userCountNumber">0</span> users online
-                </span>
-                <button id="settingsBtn" class="bg-blue-700 hover:bg-blue-800 px-3 py-1 rounded text-sm">
-                    <i class="fas fa-cog"></i>
+                <div class="relative">
+                    <span id="userCount" class="text-sm font-medium">
+                        <i class="fas fa-users mr-1"></i>
+                        <span id="userCountNumber">0</span> users online
+                    </span>
+                    <div id="notificationBadge" class="notification-badge hidden">0</div>
+                </div>
+                <button id="darkModeToggle" class="p-2 rounded-lg hover:bg-gray-200 transition" title="Toggle Dark Mode">
+                    <i class="fas fa-moon text-gray-600"></i>
+                </button>
+                <button id="settingsBtn" class="p-2 rounded-lg hover:bg-gray-200 transition" title="Settings">
+                    <i class="fas fa-cog text-gray-600"></i>
                 </button>
             </div>
         </div>
@@ -77,20 +329,42 @@
     <!-- Main Content -->
     <main class="container mx-auto p-4">
         <!-- Join Room Section -->
-        <div id="joinSection" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold mb-4">Join a Room</h2>
+        <div id="joinSection" class="max-w-md mx-auto glass-morphism rounded-xl p-8">
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-comments text-white text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                    Join a Room
+                </h2>
+                <p class="text-gray-600 text-sm">Connect and communicate with others in real-time</p>
+            </div>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
-                    <input type="text" id="username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your name">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user mr-1"></i>Your Name
+                    </label>
+                    <input type="text" id="username" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter your name">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Room ID</label>
-                    <input type="text" id="roomId" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter room ID">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-door-open mr-1"></i>Room ID
+                    </label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="roomId" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter room ID">
+                        <button id="generateRoomBtn" class="btn-success text-white px-4 py-3 rounded-lg" title="Generate Room ID">
+                            <i class="fas fa-magic"></i>
+                        </button>
+                    </div>
                 </div>
-                <button id="joinBtn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition">
-                    <i class="fas fa-sign-in-alt mr-2"></i>Join Room
-                </button>
+                <div class="flex space-x-3">
+                    <button id="joinBtn" class="flex-1 btn-primary text-white py-3 px-6 rounded-lg font-medium">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Join Room
+                    </button>
+                    <button id="createRoomBtn" class="flex-1 btn-secondary text-white py-3 px-6 rounded-lg font-medium">
+                        <i class="fas fa-plus mr-2"></i>Create Room
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -98,25 +372,48 @@
         <div id="chatRoom" class="hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <!-- Chat Area -->
-                <div class="lg:col-span-2 bg-white rounded-lg shadow-md">
+                <div class="lg:col-span-2 glass-morphism rounded-xl">
                     <div class="chat-container">
-                        <div class="border-b p-4">
-                            <h3 class="font-semibold text-lg">
-                                <i class="fas fa-comments mr-2"></i>Room: <span id="currentRoom"></span>
-                            </h3>
+                        <div class="border-b border-gray-200 p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-comments text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-lg">Room: <span id="currentRoom" class="text-blue-600"></span></h3>
+                                        <p class="text-sm text-gray-500">Real-time communication</p>
+                                    </div>
+                                </div>
+                                <button id="clearChatBtn" class="p-2 rounded-lg hover:bg-gray-200 transition" title="Clear Chat">
+                                    <i class="fas fa-broom text-gray-600"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="messages-container p-4" id="messagesContainer">
                             <!-- Messages will appear here -->
                         </div>
-                        <div class="border-t p-4">
+                        <div class="border-t border-gray-200 p-4">
                             <div class="flex items-center space-x-2">
-                                <input type="text" id="messageInput" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type a message...">
-                                <button id="sendBtn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                                <div class="voice-recorder">
+                                    <button id="voiceRecordBtn" class="p-2 rounded-lg hover:bg-gray-200 transition" title="Record Voice">
+                                        <i class="fas fa-microphone text-gray-600"></i>
+                                    </button>
+                                    <div class="voice-wave" id="voiceWave">Recording...</div>
+                                </div>
+                                <input type="text" id="messageInput" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Type a message...">
+                                <button id="emojiBtn" class="p-2 rounded-lg hover:bg-gray-200 transition" title="Add Emoji">
+                                    <i class="fas fa-smile text-gray-600"></i>
+                                </button>
+                                <button id="sendBtn" class="btn-primary text-white px-4 py-3 rounded-lg">
                                     <i class="fas fa-paper-plane"></i>
                                 </button>
                             </div>
                             <div class="typing-indicator text-sm text-gray-500 mt-2">
                                 <i class="fas fa-ellipsis-h"></i> Someone is typing...
+                            </div>
+                            <div class="emoji-picker" id="emojiPicker">
+                                <!-- Emojis will be added here -->
                             </div>
                         </div>
                     </div>
@@ -125,28 +422,31 @@
                 <!-- Side Panel -->
                 <div class="space-y-4">
                     <!-- Users List -->
-                    <div class="bg-white rounded-lg shadow-md p-4">
-                        <h3 class="font-semibold mb-3">
-                            <i class="fas fa-users mr-2"></i>Online Users
+                    <div class="glass-morphism rounded-xl p-4">
+                        <h3 class="font-semibold mb-4 flex items-center">
+                            <i class="fas fa-users mr-2 text-blue-600"></i>Online Users
                         </h3>
-                        <div id="usersList" class="space-y-2">
+                        <div id="usersList" class="space-y-3">
                             <!-- Users will appear here -->
                         </div>
                     </div>
 
                     <!-- Actions -->
-                    <div class="bg-white rounded-lg shadow-md p-4">
-                        <h3 class="font-semibold mb-3">
-                            <i class="fas fa-tools mr-2"></i>Actions
+                    <div class="glass-morphism rounded-xl p-4">
+                        <h3 class="font-semibold mb-4 flex items-center">
+                            <i class="fas fa-tools mr-2 text-purple-600"></i>Actions
                         </h3>
-                        <div class="space-y-2">
-                            <button id="shareScreenBtn" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition">
+                        <div class="space-y-3">
+                            <button id="inviteBtn" class="w-full btn-secondary text-white py-3 px-4 rounded-lg font-medium">
+                                <i class="fas fa-user-plus mr-2"></i>Invite Others
+                            </button>
+                            <button id="shareScreenBtn" class="w-full btn-success text-white py-3 px-4 rounded-lg font-medium">
                                 <i class="fas fa-desktop mr-2"></i>Share Screen
                             </button>
-                            <button id="stopScreenShareBtn" class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition hidden">
+                            <button id="stopScreenShareBtn" class="w-full bg-red-600 text-white py-3 px-4 rounded-lg font-medium hidden">
                                 <i class="fas fa-stop mr-2"></i>Stop Sharing
                             </button>
-                            <label for="fileInput" class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition cursor-pointer block text-center">
+                            <label for="fileInput" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 rounded-lg cursor-pointer block text-center font-medium hover:from-purple-700 hover:to-pink-700 transition">
                                 <i class="fas fa-file-upload mr-2"></i>Share File
                             </label>
                             <input type="file" id="fileInput" class="hidden" accept="image/*,.pdf,.doc,.docx,.txt">
@@ -154,11 +454,32 @@
                     </div>
 
                     <!-- Screen Share Area -->
-                    <div id="screenShareArea" class="bg-white rounded-lg shadow-md p-4 hidden">
-                        <h3 class="font-semibold mb-3">
-                            <i class="fas fa-desktop mr-2"></i>Screen Share
+                    <div id="screenShareArea" class="glass-morphism rounded-xl p-4 hidden">
+                        <h3 class="font-semibold mb-4 flex items-center">
+                            <i class="fas fa-desktop mr-2 text-green-600"></i>Screen Share
                         </h3>
                         <video id="screenShareVideo" class="screen-share-video w-full" autoplay playsinline></video>
+                    </div>
+
+                    <!-- Room Stats -->
+                    <div class="glass-morphism rounded-xl p-4">
+                        <h3 class="font-semibold mb-4 flex items-center">
+                            <i class="fas fa-chart-bar mr-2 text-indigo-600"></i>Room Stats
+                        </h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Messages:</span>
+                                <span id="messageCount" class="font-medium">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Files Shared:</span>
+                                <span id="fileCount" class="font-medium">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Screen Shares:</span>
+                                <span id="screenShareCount" class="font-medium">0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -176,6 +497,44 @@
             </div>
             <div id="modalContent">
                 <!-- File content will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Modal -->
+    <div id="inviteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Invite Others to Room</h3>
+                <button id="closeInviteModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Share this room link:</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="roomLink" class="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50" readonly>
+                        <button id="copyLinkBtn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Room ID:</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="roomCode" class="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50" readonly>
+                        <button id="copyCodeBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-blue-50 p-3 rounded-md">
+                    <p class="text-sm text-blue-800">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Share the link or room ID with others to invite them to join this room.
+                    </p>
+                </div>
             </div>
         </div>
     </div>

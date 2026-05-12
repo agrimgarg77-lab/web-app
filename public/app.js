@@ -17,12 +17,24 @@ class WebCommunicationApp {
     }
 
     initializeEventListeners() {
-        // Join room functionality
+        // Room functionality
         document.getElementById('joinBtn').addEventListener('click', () => this.joinRoom());
+        document.getElementById('createRoomBtn').addEventListener('click', () => this.createRoom());
+        document.getElementById('generateRoomBtn').addEventListener('click', () => this.generateRoomId());
+
+        // Chat functionality
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.sendMessage();
         });
         document.getElementById('sendBtn').addEventListener('click', () => this.sendMessage());
+
+        // New features
+        document.getElementById('emojiBtn').addEventListener('click', () => this.toggleEmojiPicker());
+        document.getElementById('voiceRecordBtn').addEventListener('mousedown', () => this.startVoiceRecording());
+        document.getElementById('voiceRecordBtn').addEventListener('mouseup', () => this.stopVoiceRecording());
+        document.getElementById('voiceRecordBtn').addEventListener('mouseleave', () => this.stopVoiceRecording());
+        document.getElementById('clearChatBtn').addEventListener('click', () => this.clearChat());
+        document.getElementById('darkModeToggle').addEventListener('click', () => this.toggleDarkMode());
 
         // File sharing
         document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileUpload(e));
@@ -31,10 +43,19 @@ class WebCommunicationApp {
         document.getElementById('shareScreenBtn').addEventListener('click', () => this.startScreenShare());
         document.getElementById('stopScreenShareBtn').addEventListener('click', () => this.stopScreenShare());
 
-        // Modal
+        // Invite functionality
+        document.getElementById('inviteBtn').addEventListener('click', () => this.showInviteModal());
+        document.getElementById('copyLinkBtn').addEventListener('click', () => this.copyRoomLink());
+        document.getElementById('copyCodeBtn').addEventListener('click', () => this.copyRoomCode());
+
+        // Modals
         document.getElementById('closeModal').addEventListener('click', () => this.closeModal());
+        document.getElementById('closeInviteModal').addEventListener('click', () => this.closeInviteModal());
         document.getElementById('fileModal').addEventListener('click', (e) => {
             if (e.target.id === 'fileModal') this.closeModal();
+        });
+        document.getElementById('inviteModal').addEventListener('click', (e) => {
+            if (e.target.id === 'inviteModal') this.closeInviteModal();
         });
 
         // Typing indicator
@@ -46,6 +67,60 @@ class WebCommunicationApp {
                 this.socket.emit('stop-typing');
             }, 1000);
         });
+
+        // Initialize emoji picker
+        this.initializeEmojiPicker();
+        
+        // Initialize stats
+        this.stats = {
+            messages: 0,
+            files: 0,
+            screenShares: 0
+        };
+        
+        // Check for saved dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            this.enableDarkMode();
+        }
+    }
+
+    generateRoomId() {
+        const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        document.getElementById('roomId').value = roomId;
+        this.showNotification('Room ID generated: ' + roomId, 'success');
+    }
+
+    createRoom() {
+        const usernameInput = document.getElementById('username');
+        const roomIdInput = document.getElementById('roomId');
+
+        if (!usernameInput.value.trim()) {
+            this.showNotification('Please enter your name', 'error');
+            return;
+        }
+
+        // Generate room ID if not provided
+        if (!roomIdInput.value.trim()) {
+            this.generateRoomId();
+        }
+
+        this.username = usernameInput.value.trim();
+        this.roomId = roomIdInput.value.trim();
+
+        // Initialize socket connection
+        this.socket = io();
+        this.setupSocketListeners();
+
+        // Join room
+        this.socket.emit('join-room', this.roomId, this.username);
+
+        // Update UI
+        document.getElementById('joinSection').classList.add('hidden');
+        document.getElementById('chatRoom').classList.remove('hidden');
+        document.getElementById('currentRoom').textContent = this.roomId;
+
+        this.addSystemMessage(`Welcome to room ${this.roomId}!`);
+        this.addSystemMessage(`You created this room. Share the room ID or link to invite others.`);
     }
 
     joinRoom() {
@@ -304,20 +379,29 @@ class WebCommunicationApp {
     addMessage(message, username, timestamp, isOwn = false) {
         const messagesContainer = document.getElementById('messagesContainer');
         const messageDiv = document.createElement('div');
-        messageDiv.className = `mb-3 ${isOwn ? 'text-right' : 'text-left'}`;
+        messageDiv.className = `mb-3 message-bubble ${isOwn ? 'text-right' : 'text-left'}`;
         
         messageDiv.innerHTML = `
             <div class="inline-block max-w-xs lg:max-w-md">
-                <div class="${isOwn ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'} rounded-lg px-4 py-2">
-                    <div class="font-semibold text-sm ${isOwn ? 'text-blue-100' : 'text-gray-600'}">${username}</div>
+                <div class="${isOwn ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'} rounded-lg px-4 py-2 shadow-md">
+                    <div class="flex items-center space-x-2 mb-1">
+                        <div class="user-avatar text-xs">
+                            ${username.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="font-semibold text-sm ${isOwn ? 'text-blue-100' : 'text-gray-600'}">${username}</div>
+                    </div>
                     <div class="text-sm">${this.escapeHtml(message)}</div>
-                    <div class="text-xs ${isOwn ? 'text-blue-200' : 'text-gray-500'} mt-1">${timestamp}</div>
+                    <div class="text-xs ${isOwn ? 'text-blue-200' : 'text-gray-500'} mt-2 flex justify-between items-center">
+                        <span>${timestamp}</span>
+                        ${isOwn ? '<i class="fas fa-check-double text-xs"></i>' : ''}
+                    </div>
                 </div>
             </div>
         `;
         
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        this.updateStats('messages');
     }
 
     addFileMessage(filename, originalName, username, timestamp, isOwn = false) {
@@ -374,11 +458,19 @@ class WebCommunicationApp {
         
         users.forEach(user => {
             const userDiv = document.createElement('div');
-            userDiv.className = 'flex items-center space-x-2 p-2 rounded hover:bg-gray-50';
+            userDiv.className = 'flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition';
             userDiv.innerHTML = `
-                <span class="online-indicator"></span>
-                <span class="text-sm font-medium">${user.username}</span>
-                ${user.username === this.username ? '<span class="text-xs text-gray-500">(You)</span>' : ''}
+                <div class="user-avatar text-sm">
+                    ${user.username.charAt(0).toUpperCase()}
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center space-x-2">
+                        <span class="online-indicator"></span>
+                        <span class="text-sm font-medium">${user.username}</span>
+                        ${user.username === this.username ? '<span class="text-xs text-gray-500">(You)</span>' : ''}
+                    </div>
+                    <div class="text-xs text-gray-500">Online now</div>
+                </div>
             `;
             usersList.appendChild(userDiv);
         });
@@ -428,9 +520,190 @@ class WebCommunicationApp {
         document.getElementById('fileModal').classList.add('hidden');
     }
 
+    closeInviteModal() {
+        document.getElementById('inviteModal').classList.add('hidden');
+    }
+
+    showInviteModal() {
+        const modal = document.getElementById('inviteModal');
+        const roomLink = document.getElementById('roomLink');
+        const roomCode = document.getElementById('roomCode');
+        
+        // Generate room link
+        const currentUrl = window.location.origin + window.location.pathname;
+        roomLink.value = `${currentUrl}?room=${this.roomId}`;
+        roomCode.value = this.roomId;
+        
+        modal.classList.remove('hidden');
+    }
+
+    copyRoomLink() {
+        const roomLink = document.getElementById('roomLink');
+        roomLink.select();
+        document.execCommand('copy');
+        this.showNotification('Room link copied to clipboard!', 'success');
+    }
+
+    copyRoomCode() {
+        const roomCode = document.getElementById('roomCode');
+        roomCode.select();
+        document.execCommand('copy');
+        this.showNotification('Room code copied to clipboard!', 'success');
+    }
+
+    // New feature methods
+    initializeEmojiPicker() {
+        const emojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '😎', '🤓', '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲', '😳', '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾', '🤖', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️', '🖖', '👋', '🤙', '💪', '🙏'];
+        
+        const picker = document.getElementById('emojiPicker');
+        emojis.forEach(emoji => {
+            const btn = document.createElement('button');
+            btn.className = 'emoji-btn';
+            btn.textContent = emoji;
+            btn.onclick = () => this.insertEmoji(emoji);
+            picker.appendChild(btn);
+        });
+    }
+
+    toggleEmojiPicker() {
+        const picker = document.getElementById('emojiPicker');
+        picker.style.display = picker.style.display === 'grid' ? 'none' : 'grid';
+    }
+
+    insertEmoji(emoji) {
+        const input = document.getElementById('messageInput');
+        input.value += emoji;
+        input.focus();
+        this.toggleEmojiPicker();
+    }
+
+    startVoiceRecording() {
+        if (!this.mediaRecorder) {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    this.mediaRecorder = new MediaRecorder(stream);
+                    this.audioChunks = [];
+                    
+                    this.mediaRecorder.ondataavailable = event => {
+                        this.audioChunks.push(event.data);
+                    };
+                    
+                    this.mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+                        this.sendVoiceMessage(audioBlob);
+                        this.audioChunks = [];
+                    };
+                    
+                    this.mediaRecorder.start();
+                    document.getElementById('voiceRecordBtn').classList.add('voice-recording');
+                    document.getElementById('voiceWave').style.display = 'block';
+                })
+                .catch(err => {
+                    console.error('Error accessing microphone:', err);
+                    this.showNotification('Microphone access denied', 'error');
+                });
+        }
+    }
+
+    stopVoiceRecording() {
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+            this.mediaRecorder.stop();
+            this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            this.mediaRecorder = null;
+            document.getElementById('voiceRecordBtn').classList.remove('voice-recording');
+            document.getElementById('voiceWave').style.display = 'none';
+        }
+    }
+
+    sendVoiceMessage(audioBlob) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64Audio = reader.result;
+            const timestamp = new Date().toLocaleTimeString();
+            
+            this.addVoiceMessage(base64Audio, this.username, timestamp, true);
+            
+            this.socket.emit('voice-message', {
+                audio: base64Audio,
+                username: this.username,
+                timestamp: timestamp,
+                roomId: this.roomId
+            });
+        };
+        reader.readAsDataURL(audioBlob);
+    }
+
+    addVoiceMessage(audio, username, timestamp, isOwn = false) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `mb-3 ${isOwn ? 'text-right' : 'text-left'}`;
+        
+        messageDiv.innerHTML = `
+            <div class="inline-block max-w-xs lg:max-w-md">
+                <div class="${isOwn ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'} rounded-lg px-4 py-2">
+                    <div class="font-semibold text-sm ${isOwn ? 'text-blue-100' : 'text-gray-600'}">${username}</div>
+                    <div class="flex items-center space-x-2 mt-2">
+                        <audio controls class="w-32 h-8">
+                            <source src="${audio}" type="audio/wav">
+                        </audio>
+                        <i class="fas fa-microphone ${isOwn ? 'text-blue-200' : 'text-gray-500'}"></i>
+                    </div>
+                    <div class="text-xs ${isOwn ? 'text-blue-200' : 'text-gray-500'} mt-2">${timestamp}</div>
+                </div>
+            </div>
+        `;
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        this.updateStats('messages');
+    }
+
+    clearChat() {
+        if (confirm('Are you sure you want to clear all messages?')) {
+            document.getElementById('messagesContainer').innerHTML = '';
+            this.addSystemMessage('Chat cleared');
+            this.showNotification('Chat cleared', 'success');
+        }
+    }
+
+    toggleDarkMode() {
+        const body = document.body;
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const icon = darkModeToggle.querySelector('i');
+        
+        if (body.classList.contains('dark')) {
+            this.disableDarkMode();
+        } else {
+            this.enableDarkMode();
+        }
+    }
+
+    enableDarkMode() {
+        document.body.classList.add('dark');
+        const icon = document.querySelector('#darkModeToggle i');
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+        localStorage.setItem('darkMode', 'true');
+    }
+
+    disableDarkMode() {
+        document.body.classList.remove('dark');
+        const icon = document.querySelector('#darkModeToggle i');
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+        localStorage.setItem('darkMode', 'false');
+    }
+
+    updateStats(type) {
+        this.stats[type === 'messages' ? 'messages' : type === 'files' ? 'files' : 'screenShares']++;
+        document.getElementById('messageCount').textContent = this.stats.messages;
+        document.getElementById('fileCount').textContent = this.stats.files;
+        document.getElementById('screenShareCount').textContent = this.stats.screenShares;
+    }
+
     showNotification(message, type = 'info') {
         const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+        notification.className = `fixed top-20 right-4 p-4 rounded-lg shadow-lg z-50 glass-morphism ${
             type === 'success' ? 'bg-green-500 text-white' :
             type === 'error' ? 'bg-red-500 text-white' :
             'bg-blue-500 text-white'
@@ -449,7 +722,8 @@ class WebCommunicationApp {
         document.body.appendChild(notification);
         
         setTimeout(() => {
-            notification.remove();
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
         }, 3000);
     }
 
@@ -459,6 +733,18 @@ class WebCommunicationApp {
         return div.innerHTML;
     }
 }
+
+// Auto-join room if URL parameter is provided
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomFromUrl = urlParams.get('room');
+    
+    if (roomFromUrl) {
+        document.getElementById('roomId').value = roomFromUrl;
+        // Focus on username field for better UX
+        document.getElementById('username').focus();
+    }
+});
 
 // Initialize the app
 const app = new WebCommunicationApp();

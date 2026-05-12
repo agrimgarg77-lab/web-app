@@ -82,44 +82,40 @@ npm run dev
 
 Note: Screen sharing requires HTTPS in production environments.
 
-## Deployment
+## 🚀 Quick Deployment
 
-### Local Development
-The app runs on `http://localhost:3000` by default.
+### **Easiest Option: Vercel (Recommended)**
+1. Push to GitHub
+2. Go to [vercel.com](https://vercel.com) → Import Project
+3. Your app is live in 2 minutes! 🎉
 
-### Production Deployment
+### **Alternative Options**
+- **Railway** - Modern, easy deployment
+- **Heroku** - Classic, reliable
+- **DigitalOcean** - Production-ready
 
-#### Option 1: Heroku
-1. Create a `Procfile`:
-```
-web: node server.js
-```
+### **Detailed Instructions**
+See **[HOSTING_GUIDE.md](HOSTING_GUIDE.md)** for complete step-by-step deployment instructions for all platforms.
 
-2. Deploy to Heroku:
+### **Quick Deploy Script**
 ```bash
-heroku create
-git push heroku main
+chmod +x deploy.sh
+./deploy.sh
 ```
 
-#### Option 2: Vercel
-1. Install Vercel CLI:
-```bash
-npm i -g vercel
-```
+## 🌐 Hosting Options
 
-2. Deploy:
-```bash
-vercel
-```
+| Platform | Free Tier | Difficulty | URL |
+|----------|-----------|------------|-----|
+| **Vercel** | ✅ Excellent | ⭐ Easy | `.vercel.app` |
+| **Railway** | ✅ Good | ⭐ Easy | `.railway.app` |
+| **Heroku** | ✅ Limited | ⭐⭐ Medium | `.herokuapp.com` |
+| **DigitalOcean** | ❌ No | ⭐⭐⭐ Hard | `.ondigitalocean.app` |
 
-#### Option 3: DigitalOcean/Other VPS
-1. Install Node.js and npm
-2. Clone the repository
-3. Install dependencies
-4. Use PM2 for process management:
+### **Local Development**
 ```bash
-npm install -g pm2
-pm2 start server.js --name "web-communication-app"
+npm start
+# App runs on http://localhost:3000
 ```
 
 ### Environment Variables

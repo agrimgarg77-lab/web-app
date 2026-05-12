@@ -107,8 +107,21 @@ class WebCommunicationApp {
         this.username = usernameInput.value.trim();
         this.roomId = roomIdInput.value.trim();
 
-        // Initialize socket connection
-        this.socket = io();
+        // Initialize socket connection with Vercel compatibility
+        const socketOptions = {
+            transports: ['websocket', 'polling'],
+            upgrade: false,
+            rememberUpgrade: false,
+            timeout: 5000
+        };
+
+        // Special handling for Vercel
+        if (window.location.hostname.includes('vercel.app')) {
+            socketOptions.forceNew = true;
+            socketOptions.path = '/api/socket.io';
+        }
+
+        this.socket = io(socketOptions);
         this.setupSocketListeners();
 
         // Join room
@@ -135,8 +148,21 @@ class WebCommunicationApp {
         this.username = usernameInput.value.trim();
         this.roomId = roomIdInput.value.trim();
 
-        // Initialize socket connection
-        this.socket = io();
+        // Initialize socket connection with Vercel compatibility
+        const socketOptions = {
+            transports: ['websocket', 'polling'],
+            upgrade: false,
+            rememberUpgrade: false,
+            timeout: 5000
+        };
+
+        // Special handling for Vercel
+        if (window.location.hostname.includes('vercel.app')) {
+            socketOptions.forceNew = true;
+            socketOptions.path = '/api/socket.io';
+        }
+
+        this.socket = io(socketOptions);
         this.setupSocketListeners();
 
         // Join room
@@ -291,32 +317,61 @@ class WebCommunicationApp {
         const file = event.target.files[0];
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append('file', file);
-
         try {
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
+            // For Vercel, we'll handle file upload differently
+            if (window.location.hostname.includes('vercel.app')) {
+                // Convert file to base64 for Vercel
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const base64Data = e.target.result;
+                    const timestamp = new Date().toLocaleTimeString();
+                    
+                    // Create a data URL for the file
+                    const dataUrl = base64Data;
+                    
+                    // Add file message with data URL
+                    this.addFileMessage(dataUrl, file.name, this.username, timestamp, true);
+                    
+                    // Notify others about the file
+                    this.socket.emit('file-shared', {
+                        filename: dataUrl,
+                        originalName: file.name,
+                        username: this.username,
+                        timestamp: timestamp,
+                        roomId: this.roomId
+                    });
 
-            const result = await response.json();
-            
-            if (response.ok) {
-                const timestamp = new Date().toLocaleTimeString();
-                this.addFileMessage(result.filename, result.originalName, this.username, timestamp, true);
-                
-                this.socket.emit('file-shared', {
-                    filename: result.filename,
-                    originalName: result.originalName,
-                    username: this.username,
-                    timestamp: timestamp,
-                    roomId: this.roomId
+                    this.showNotification('File shared successfully', 'success');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Original upload method for non-Vercel environments
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
                 });
 
-                this.showNotification('File shared successfully', 'success');
-            } else {
-                this.showNotification('Failed to upload file', 'error');
+                const result = await response.json();
+                
+                if (response.ok) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    this.addFileMessage(result.filename, result.originalName, this.username, timestamp, true);
+                    
+                    this.socket.emit('file-shared', {
+                        filename: result.filename,
+                        originalName: result.originalName,
+                        username: this.username,
+                        timestamp: timestamp,
+                        roomId: this.roomId
+                    });
+
+                    this.showNotification('File shared successfully', 'success');
+                } else {
+                    this.showNotification('Failed to upload file', 'error');
+                }
             }
         } catch (error) {
             console.error('File upload error:', error);
@@ -746,5 +801,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Initialize the app
+// Initialize the app with Vercel compatibility
 const app = new WebCommunicationApp();
+
+// Vercel-specific socket.io configuration
+if (window.location.hostname.includes('vercel.app')) {
+    // Override socket connection for Vercel
+    app.socket = io({
+        transports: ['websocket', 'polling'],
+        upgrade: false,
+        rememberUpgrade: false,
+        timeout: 5000,
+        forceNew: true
+    });
+}

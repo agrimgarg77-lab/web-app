@@ -50,7 +50,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self' ws: wss:; media-src 'self' blob:; font-src 'self' https://cdnjs.cloudflare.com;"
+          "value": "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.socket.io; style-src 'self' 'unsafe-inline' blob: data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' blob: data: https://k2mkucxia43oc7fa.public.blob.vercel-storage.com; connect-src 'self' ws: wss: blob: data: https://cdn.socket.io; media-src 'self' blob: data:; font-src 'self' 'unsafe-inline' data: https://k2mkucxia43oc7fa.public.blob.vercel-storage.com https://cdnjs.cloudflare.com; worker-src 'self' blob: data:; frame-src 'self' blob: data:;"
         }
       ]
     },

@@ -464,6 +464,8 @@ class WebCommunicationApp {
         const fileDiv = document.createElement('div');
         fileDiv.className = `mb-3 ${isOwn ? 'text-right' : 'text-left'}`;
         
+        // Check if filename is a data URL (Vercel) or just a filename (local)
+        const isDataUrl = filename.startsWith('data:');
         const fileExtension = originalName.split('.').pop().toLowerCase();
         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
         
@@ -473,12 +475,12 @@ class WebCommunicationApp {
                     <div class="font-semibold text-sm ${isOwn ? 'text-blue-100' : 'text-gray-600'}">${username}</div>
                     <div class="mt-2">
                         ${isImage ? 
-                            `<img src="/uploads/${filename}" alt="${originalName}" class="file-preview cursor-pointer" onclick="app.showFilePreview('/uploads/${filename}', '${originalName}')">` :
+                            `<img src="${isDataUrl ? filename : '/uploads/' + filename}" alt="${originalName}" class="file-preview cursor-pointer max-w-full h-32 object-cover rounded" onclick="app.showFilePreview('${isDataUrl ? filename : '/uploads/' + filename}', '${originalName}')">` :
                             `<div class="flex items-center space-x-2">
                                 <i class="fas fa-file text-2xl ${isOwn ? 'text-blue-200' : 'text-gray-400'}"></i>
                                 <div>
                                     <div class="text-sm font-medium">${originalName}</div>
-                                    <button onclick="app.downloadFile('/uploads/${filename}', '${originalName}')" class="text-xs ${isOwn ? 'text-blue-200' : 'text-blue-600'} hover:underline">
+                                    <button onclick="app.downloadFile('${isDataUrl ? filename : '/uploads/' + filename}', '${originalName}')" class="text-xs ${isOwn ? 'text-blue-200' : 'text-blue-600'} hover:underline">
                                         Download
                                     </button>
                                 </div>
@@ -492,6 +494,7 @@ class WebCommunicationApp {
         
         messagesContainer.appendChild(fileDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        this.updateStats('files');
     }
 
     addSystemMessage(message) {
@@ -563,12 +566,33 @@ class WebCommunicationApp {
     }
 
     downloadFile(filePath, filename) {
-        const link = document.createElement('a');
-        link.href = filePath;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Handle data URLs (Vercel) vs regular file paths (local)
+        if (filePath.startsWith('data:')) {
+            // For data URLs, create a blob and download
+            fetch(filePath)
+                .then(res => res.blob())
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                })
+                .catch(err => {
+                    console.error('Download error:', err);
+                    this.showNotification('Failed to download file', 'error');
+                });
+        } else {
+            // For regular file paths (local development)
+            const link = document.createElement('a');
+            link.href = filePath;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     }
 
     closeModal() {

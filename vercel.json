@@ -8,10 +8,6 @@
     {
       "src": "api/socket.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "public/**/*",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -30,6 +26,18 @@
     {
       "src": "/",
       "dest": "/public/index.html"
+    },
+    {
+      "src": "/index.html",
+      "dest": "/public/index.html"
+    },
+    {
+      "src": "/app.js",
+      "dest": "/public/app.js"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "/public/uploads/$1"
     },
     {
       "src": "/(.*)",
@@ -52,6 +60,15 @@
         {
           "key": "Cache-Control",
           "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/app.js",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
         }
       ]
     }
